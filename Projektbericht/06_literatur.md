@@ -3,6 +3,10 @@
 Die folgenden Quellen wurden im Text zitiert. Der Zitierstil orientiert sich am Autor-Jahr-System,
 die Liste ist alphabetisch nach Nachname geordnet.
 
+Chen, Q., Cheng, Q., Chen, Y., Li, K., Wang, D., & Cao, S. (2021). The Influence of Sky View Factor
+on Daytime and Nighttime Urban Land Surface Temperature in Different Spatial-Temporal Scales: A Case
+Study of Beijing. *Remote Sensing*, 13(20), 4117. https://doi.org/10.3390/rs13204117
+
 Meili, N., Manoli, G., Burlando, P., Carmeliet, J., Chow, W. T. L., Coutts, A. M., Roth, M.,
 Velasco, E., Vivoni, E. R., & Fatichi, S. (2021). Tree effects on urban microclimate: Diurnal,
 seasonal, and climatic temperature differences explained by separating radiation, evapotranspiration,
@@ -32,5 +36,7 @@ https://doi.org/10.1073/pnas.1817561116
 **Hinweis zur Prüfung:** Die Zitationsdaten der Kernquellen (Meili et al. 2021, Schwaab et al. 2021,
 Speak et al. 2020, Ziter et al. 2019) wurden mit ihren DOIs bestätigt. Bei Tang et al. (2024) wurden
 die Autor:innen über die Suchergebnisse verifiziert; die DOI folgt dem Standardaufbau der Zeitschrift
-und sollte vor der Abgabe am Verlag gegengeprüft werden. Ergänzend zur Einordnung Berlins könnte bei
+und sollte vor der Abgabe am Verlag gegengeprüft werden. Gleiches gilt für Chen et al. (2021): Titel,
+Zeitschrift und DOI sind bestätigt, die Autor:innen stammen aus den Suchergebnissen und sollten am
+Verlag gegengeprüft werden. Ergänzend zur Einordnung Berlins könnte bei
 Bedarf eine berlinspezifische Quelle aufgenommen werden.

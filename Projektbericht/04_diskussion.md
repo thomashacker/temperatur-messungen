@@ -24,6 +24,18 @@ denn Schatten kann nur wirken, solange die Sonne scheint. Der kleine nächtliche
 erklären, dass die stärker aufgeheizten Flächen der baumlosen Straße die tagsüber gespeicherte Wärme
 noch eine Weile abgeben. H1 wird durch diese Ergebnisse klar bestätigt.
 
+Auffällig ist außerdem, dass der Boden über den Gesamtzeitraum stärker streut als die Wand (an der
+baumlosen Straße etwa 5,5 gegen 4,8 °C Standardabweichung). Das lässt sich mit der Geometrie
+erklären. Die waagerechte Bodenfläche sieht den ganzen Himmel und gibt nachts ihre Wärme fast
+ungehindert an den kalten Himmel ab, sie kühlt also stark aus. Eine senkrechte Wand sieht nur einen
+Teil des Himmels, der Rest ist vom gegenüberliegenden Gebäude verdeckt, weshalb sie nachts weniger
+Wärme verliert und wärmer bleibt. Der Boden hat dadurch einen größeren Abstand zwischen kalten Nächten
+und heißen Mittagen. Dazu passt, dass die tiefstehende Morgen- und Nachmittagssonne senkrechte Flächen
+über einen längeren Teil des Tages bescheint, während der Boden vor allem mittags stark aufheizt. Die
+Wand ist so gleichmäßiger warm und streut weniger, der Boden schwankt stärker. Dass ein großer
+Himmelsanteil (hoher Sky-View-Factor) mit stärkerer Tageserwärmung und stärkerer nächtlicher
+Abkühlung einhergeht, also mit einer größeren Tagesspanne, ist gut belegt (Chen et al., 2021).
+
 ## 4.2 Lufttemperatur: nur schwache Kühlung (H2)
 
 Bei der Lufttemperatur fiel der Unterschied viel kleiner aus, im Mittel nur rund 0,4 bis 0,8 °C
