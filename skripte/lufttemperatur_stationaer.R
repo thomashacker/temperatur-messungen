@@ -119,20 +119,100 @@ ggsave("../plots/lufttemperatur_mobil_vs_stationaer_differenz.png", p2,
        width = 10, height = 5.5, dpi = 200, bg = "white")
 
 # =========================================================================
-#  KENNZAHLEN
+#  BOXPLOTS (stationär) — Aggregation auf Rundenebene
 # =========================================================================
-cat("### Differenz begrünt minus unbegrünt am 19.06. (positiv = begrünt wärmer) ###\n")
+# Wie bei den mobilen Boxplots: pro Runde je Straße ein Wert (Mittel der zwei
+# stationären Stationen über die Runde). n = 40 je Straße. Die stationären
+# Stationen sind feste Standorte, deshalb gibt es keinen Alle/Auswahl-Split.
+runde_stat <- aufb %>%
+  group_by(round_no) %>%
+  summarise(`Begrünte Straße`   = mean(stat_begr,   na.rm = TRUE),
+            `Unbegrünte Straße` = mean(stat_unbegr, na.rm = TRUE),
+            zeit = mean(beginn_local_parsed), .groups = "drop") %>%
+  mutate(tageszeit = if_else(hour(zeit) >= 5 & hour(zeit) < 22, "Tag", "Nacht"))
+
+runde_lang <- runde_stat %>%
+  pivot_longer(c(`Begrünte Straße`, `Unbegrünte Straße`),
+               names_to = "strasse", values_to = "Ta") %>%
+  mutate(strasse = factor(strasse, levels = names(farben_strasse)))
+
+plot_df <- bind_rows(
+  runde_lang %>% mutate(zeitfenster = "Gesamt"),
+  runde_lang %>% filter(tageszeit == "Tag")   %>% mutate(zeitfenster = "Tag (05–22 Uhr)"),
+  runde_lang %>% filter(tageszeit == "Nacht") %>% mutate(zeitfenster = "Nacht (22–05 Uhr)")
+) %>%
+  mutate(zeitfenster = factor(zeitfenster,
+           levels = c("Gesamt", "Tag (05–22 Uhr)", "Nacht (22–05 Uhr)")))
+
+# Gemeinsame y-Achse über alle drei Grafiken.
+y_grenzen <- range(plot_df$Ta, na.rm = TRUE)
+
+speichere_boxplot <- function(daten, untertitel, dateiname) {
+  p <- ggplot(daten, aes(x = strasse, y = Ta, fill = strasse)) +
+    geom_boxplot(width = 0.6, outlier.size = 0.8, alpha = 0.9, linewidth = 0.4) +
+    scale_fill_manual(name = "Straßentyp", values = farben_strasse) +
+    scale_y_continuous(breaks = scales::breaks_width(2), minor_breaks = scales::breaks_width(1)) +
+    coord_cartesian(ylim = y_grenzen) +
+    labs(title = "Lufttemperatur stationär: begrünte vs. unbegrünte Straße",
+         subtitle = untertitel, x = "Straßentyp", y = "Lufttemperatur (°C)",
+         caption = "Stationäre nMetos-Daten, ein Wert je Messrunde und Straße, n = 40 je Straße") +
+    theme_minimal(base_size = 13) +
+    theme(plot.title = element_text(face = "bold"), plot.subtitle = element_text(colour = "grey40"),
+          legend.position = "bottom",
+          panel.grid.major.y = element_line(colour = "grey85"),
+          panel.grid.minor.y = element_line(colour = "grey92", linewidth = 0.3))
+  ggsave(paste0("../plots/", dateiname), p, width = 6.5, height = 5, dpi = 200, bg = "white")
+}
+
+kombis <- list(
+  list(zf = "Gesamt",            datei = "lufttemperatur_stationaer_boxplot_gesamt.png"),
+  list(zf = "Tag (05–22 Uhr)",   datei = "lufttemperatur_stationaer_boxplot_tag.png"),
+  list(zf = "Nacht (22–05 Uhr)", datei = "lufttemperatur_stationaer_boxplot_nacht.png")
+)
+for (k in kombis) speichere_boxplot(filter(plot_df, zeitfenster == k$zf), k$zf, k$datei)
+
+# =========================================================================
+#  STATISTIK (stationär)
+# =========================================================================
+# --- Mittlere Temperatur je Gruppe und Differenz (unbegrünt minus begrünt) ---
+differenz_tab <- plot_df %>%
+  group_by(zeitfenster, strasse) %>%
+  summarise(mittel = mean(Ta), .groups = "drop") %>%
+  pivot_wider(names_from = strasse, values_from = mittel) %>%
+  mutate(differenz = round(`Unbegrünte Straße` - `Begrünte Straße`, 2),
+         `Begrünte Straße` = round(`Begrünte Straße`, 2),
+         `Unbegrünte Straße` = round(`Unbegrünte Straße`, 2))
+cat("### Mittlere Lufttemperatur je Gruppe und Differenz (stationär) ###\n")
+print(as.data.frame(differenz_tab), row.names = FALSE)
+
+# --- Deskriptive Kennzahlen je Gruppe (Median und Co.) ---
+kennz_tab <- plot_df %>%
+  group_by(zeitfenster, strasse) %>%
+  summarise(n = n(), min = round(min(Ta), 1), Q25 = round(quantile(Ta, 0.25), 1),
+            median = round(median(Ta), 1), mittel = round(mean(Ta), 1),
+            Q75 = round(quantile(Ta, 0.75), 1), max = round(max(Ta), 1),
+            sd = round(sd(Ta), 2), IQR = round(IQR(Ta), 1), .groups = "drop")
+cat("\n### Deskriptive Kennzahlen je Gruppe, stationär (Median und Co.) ###\n")
+print(as.data.frame(kennz_tab), row.names = FALSE)
+
+# --- Gepaarter t-Test pro Runde, je Zeitfenster ---
+paar_test <- function(df) {
+  w <- df %>% select(round_no, strasse, Ta) %>%
+    pivot_wider(names_from = strasse, values_from = Ta)
+  t.test(w$`Unbegrünte Straße`, w$`Begrünte Straße`, paired = TRUE)
+}
+cat("\n### Gepaarter t-Test pro Runde, stationär (unbegrünt vs. begrünt) ###\n")
+for (zf in c("Gesamt", "Tag (05–22 Uhr)", "Nacht (22–05 Uhr)")) {
+  cat("\n--", zf, "--\n")
+  print(paar_test(filter(plot_df, zeitfenster == zf)))
+}
+
+# --- Vergleich mobil vs. stationär am 19.06. (Kontext zum 15-Uhr-Peak) ---
+cat("\n### Differenz begrünt minus unbegrünt am 19.06. (positiv = begrünt wärmer) ###\n")
 vgl <- mob_diff %>% select(stunde, mobil = diff) %>%
   left_join(stat_diff %>% select(stunde, stationaer = diff), by = "stunde") %>%
   filter(as.Date(stunde) == as.Date("2026-06-19"), hour(stunde) >= 10, hour(stunde) <= 18) %>%
   mutate(uhr = format(stunde, "%H:%M"), mobil = round(mobil, 2), stationaer = round(stationaer, 2))
 print(as.data.frame(vgl %>% select(uhr, mobil, stationaer)), row.names = FALSE)
 
-# Gepaarter t-Test pro Runde auf den stationären Daten (Gesamtzeitraum).
-paar_stat <- aufb %>%
-  group_by(round_no) %>%
-  summarise(begr = mean(stat_begr, na.rm = TRUE), unbegr = mean(stat_unbegr, na.rm = TRUE), .groups = "drop")
-cat("\n### Gepaarter t-Test pro Runde, stationär (unbegrünt vs. begrünt) ###\n")
-print(t.test(paar_stat$unbegr, paar_stat$begr, paired = TRUE))
-
-cat("\nFERTIG. Zwei Grafiken in ../plots/ (lufttemperatur_stationaer_zeitverlauf, _mobil_vs_stationaer_differenz)\n")
+cat("\nFERTIG. Fünf Grafiken in ../plots/ (2x Zeitverlauf, 3x stationärer Boxplot)\n")
