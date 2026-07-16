@@ -1,8 +1,9 @@
 #' Oberflächentemperatur im Zeitverlauf: Boden und Wand, begrünt vs. unbegrünt
 #' Abschlussbericht Datenanalyse Stadtklima 2026
-#' Zwei Liniendiagramme (Boden und Wand) im Stil der Lufttemperatur-Grafik, je eine
+#' Liniendiagramme (Boden und Wand) im Stil der Lufttemperatur-Grafik, je eine
 #' Linie pro Straße, ganzer Zeitverlauf mit Tag/Nacht-Hintergrund.
-#' Grundlage: Auswahl 2, 4, 5, 7. Autor: Hannah Balle
+#' Zwei Varianten (alle Stationen und Auswahl 2, 4, 5, 7), analog zu den übrigen
+#' Skripten. Autor: Hannah Balle
 
 # --- Pakete ---------------------------------------------------------------
 library(dplyr)
@@ -28,12 +29,12 @@ Daten <- filter(Messkampagne$data, visit_status == "ok")
 
 # --- Aufbereitung ---------------------------------------------------------
 # Straßentyp aus der Stationsnummer, Oberflächentyp aus den Handmessungen:
-# Boden = Mittel der Punkte 1, 2, 3; Wand = Punkt 4. Stundenmittel je Straße.
+# Boden = Mittel der Punkte 1, 2, 3; Wand = Punkt 4.
 auswahl_stationen <- c(2, 4, 5, 7)
 farben_strasse <- c("Begrünte Straße" = "forestgreen", "Unbegrünte Straße" = "gray60")
 
-mess <- Daten %>%
-  filter(station_order %in% auswahl_stationen) %>%
+# Alle gültigen Besuche mit Straßentyp, Boden, Wand und Stunde.
+besuche <- Daten %>%
   mutate(
     strasse = factor(if_else(station_order %in% 1:4, "Begrünte Straße", "Unbegrünte Straße"),
                      levels = names(farben_strasse)),
@@ -41,28 +42,39 @@ mess <- Daten %>%
     Wand    = manual_Ts_4,
     stunde  = floor_date(beginn_local_parsed, "hour")
   ) %>%
-  select(stunde, strasse, Boden, Wand) %>%
-  pivot_longer(c(Boden, Wand), names_to = "oberflaechentyp", values_to = "Ts") %>%
-  filter(!is.na(Ts)) %>%
-  group_by(oberflaechentyp, strasse, stunde) %>%
-  summarise(Ts = mean(Ts, na.rm = TRUE), .groups = "drop")
+  select(station_order, stunde, strasse, Boden, Wand)
 
-# --- Tag-Rechtecke (05–22 Uhr je Kalendertag) -----------------------------
-tzone <- tz(mess$stunde)
-tage  <- seq(as.Date(min(mess$stunde), tz = tzone),
-             as.Date(max(mess$stunde), tz = tzone), by = "day")
+# Stundenmittel je Straße für eine Stationsauswahl (NULL = alle Stationen).
+stundenmittel <- function(stationen = NULL) {
+  df <- if (is.null(stationen)) besuche else filter(besuche, station_order %in% stationen)
+  df %>%
+    pivot_longer(c(Boden, Wand), names_to = "oberflaechentyp", values_to = "Ts") %>%
+    filter(!is.na(Ts)) %>%
+    group_by(oberflaechentyp, strasse, stunde) %>%
+    summarise(Ts = mean(Ts, na.rm = TRUE), .groups = "drop")
+}
+
+mess_alle    <- stundenmittel(NULL)
+mess_auswahl <- stundenmittel(auswahl_stationen)
+
+# --- Gemeinsame Achsen (aus beiden Varianten) -----------------------------
+# Tag-Rechtecke (05–22 Uhr je Kalendertag) über den vollen Zeitbereich.
+alle_stunden <- c(mess_alle$stunde, mess_auswahl$stunde)
+tzone <- tz(alle_stunden)
+tage  <- seq(as.Date(min(alle_stunden), tz = tzone),
+             as.Date(max(alle_stunden), tz = tzone), by = "day")
 tag_rechtecke <- tibble(
   xmin = as.POSIXct(paste(tage, "05:00:00"), tz = tzone),
   xmax = as.POSIXct(paste(tage, "22:00:00"), tz = tzone)
 )
-zeitbereich <- range(mess$stunde, na.rm = TRUE)
-# Gemeinsame y-Achse über Boden und Wand, damit beide Grafiken vergleichbar sind.
-y_bereich <- range(mess$Ts, na.rm = TRUE)
+zeitbereich <- range(alle_stunden, na.rm = TRUE)
+# Gemeinsame y-Achse über beide Varianten und beide Oberflächentypen.
+y_bereich <- range(c(mess_alle$Ts, mess_auswahl$Ts), na.rm = TRUE)
 
 # --- Plot-Funktion (wie Lufttemperatur-Grafik) ----------------------------
-plotte_ts <- function(typ, titel) {
-  df <- filter(mess, oberflaechentyp == typ)
-  ggplot() +
+plotte_ts <- function(daten, typ, titel, untertitel, dateiname) {
+  df <- filter(daten, oberflaechentyp == typ)
+  p <- ggplot() +
     geom_rect(data = tag_rechtecke,
               aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = "Tag"),
               alpha = 0.5) +
@@ -74,7 +86,7 @@ plotte_ts <- function(typ, titel) {
     scale_x_datetime(date_breaks = "6 hours", date_labels = "%d.%m.\n%H:%M") +
     scale_y_continuous(breaks = scales::breaks_width(2), minor_breaks = scales::breaks_width(1)) +
     coord_cartesian(xlim = zeitbereich, ylim = y_bereich) +
-    labs(title = titel, subtitle = "Auswahl 2, 4, 5, 7",
+    labs(title = titel, subtitle = untertitel,
          x = "Zeit", y = "Oberflächentemperatur (°C)",
          caption = "Hintergrund: hellgelb = Tag, weiß = Nacht") +
     theme_minimal(base_size = 12) +
@@ -82,12 +94,17 @@ plotte_ts <- function(typ, titel) {
           plot.subtitle = element_text(colour = "grey40"),
           axis.title = element_text(size = 14), axis.text = element_text(size = 11),
           legend.position = "bottom")
+  ggsave(paste0("../plots/", dateiname), p, width = 10, height = 5.5, dpi = 200, bg = "white")
 }
 
-# --- Beide Grafiken erzeugen und speichern --------------------------------
-ggsave("../plots/oberflaeche_zeitverlauf_boden.png", plotte_ts("Boden", "Oberflächentemperatur Boden"),
-       width = 10, height = 5.5, dpi = 200, bg = "white")
-ggsave("../plots/oberflaeche_zeitverlauf_wand.png", plotte_ts("Wand", "Oberflächentemperatur Wand"),
-       width = 10, height = 5.5, dpi = 200, bg = "white")
+# --- Vier Grafiken erzeugen (Boden/Wand x alle/Auswahl) -------------------
+plotte_ts(mess_alle,    "Boden", "Oberflächentemperatur Boden", "Alle Stationen",
+          "oberflaeche_zeitverlauf_boden_alle.png")
+plotte_ts(mess_alle,    "Wand",  "Oberflächentemperatur Wand",  "Alle Stationen",
+          "oberflaeche_zeitverlauf_wand_alle.png")
+plotte_ts(mess_auswahl, "Boden", "Oberflächentemperatur Boden", "Auswahl 2, 4, 5, 7",
+          "oberflaeche_zeitverlauf_boden_auswahl.png")
+plotte_ts(mess_auswahl, "Wand",  "Oberflächentemperatur Wand",  "Auswahl 2, 4, 5, 7",
+          "oberflaeche_zeitverlauf_wand_auswahl.png")
 
-cat("FERTIG. Zwei Grafiken gespeichert in ../plots/ (oberflaeche_zeitverlauf_boden, _wand)\n")
+cat("FERTIG. Vier Grafiken gespeichert in ../plots/ (oberflaeche_zeitverlauf_{boden,wand}_{alle,auswahl})\n")

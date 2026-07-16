@@ -1,27 +1,32 @@
 # Oberflächentemperatur im Zeitverlauf: Boden und Wand
 
 **Skript:** `skripte/oberflaeche_zeitverlauf.R`
-**Datum:** 2026-07-15
+**Datum:** 2026-07-16
 
 ## Verwendete Daten
 
-Kampagnendatei `campaign_2026.rds`, nur gültige Besuche (`visit_status == "ok"`), Auswahl der
-Stationen 2, 4, 5, 7. Die Oberflächentemperatur stammt aus den vier Handmessungen je Besuch
-(`manual_Ts_1` bis `manual_Ts_4`, in °C). Der Boden ist das Mittel der Punkte 1, 2 und 3, die Wand
-ist Punkt 4. Betrachtet wird der ganze Zeitverlauf der Kampagne (18. bis 20.06.2026).
+Kampagnendatei `campaign_2026.rds`, nur gültige Besuche (`visit_status == "ok"`). Die
+Oberflächentemperatur stammt aus den vier Handmessungen je Besuch (`manual_Ts_1` bis `manual_Ts_4`,
+in °C). Der Boden ist das Mittel der Punkte 1, 2 und 3, die Wand ist Punkt 4. Betrachtet wird der
+ganze Zeitverlauf der Kampagne (18. bis 20.06.2026). Wie bei den übrigen Skripten gibt es zwei
+Stationsvarianten: alle acht Stationen und die Auswahl 2, 4, 5, 7 (ohne die stark besonnten
+Stationen).
 
 ## Aggregation / Methode
 
-Zwei Liniendiagramme im Stil der Lufttemperatur-Grafik, eines für den Boden und eines für die Wand.
-Je Grafik zeigt eine grüne Linie die begrünte und eine graue Linie die unbegrünte Straße. Die Werte
-sind Stundenmittel je Straße über den echten Zeitverlauf. Der gelbe Hintergrund markiert den Tag
-(05 bis 22 Uhr), Weiß die Nacht. Beide Grafiken teilen dieselbe y-Achse, damit Boden und Wand direkt
+Liniendiagramme im Stil der Lufttemperatur-Grafik, je eines für Boden und Wand, und das jeweils für
+beide Stationsvarianten, also vier Grafiken. Je Grafik zeigt eine grüne Linie die begrünte und eine
+graue Linie die unbegrünte Straße. Die Werte sind Stundenmittel je Straße über den echten
+Zeitverlauf. Der gelbe Hintergrund markiert den Tag (05 bis 22 Uhr), Weiß die Nacht. Alle vier
+Grafiken teilen dieselbe x- und y-Achse, damit Boden und Wand sowie beide Stationsvarianten direkt
 vergleichbar sind.
 
 ## Ergebnisse
 
 Beide Oberflächen zeigen dasselbe klare Muster: tagsüber ist die begrünte Straße deutlich kühler,
-nachts gleichen sich beide Straßen an.
+nachts gleichen sich beide Straßen an. Die folgenden Zahlen beziehen sich auf die Auswahl 2, 4, 5, 7.
+Über alle Stationen ergibt sich dasselbe Bild, der Tagesabstand fällt tagsüber sogar etwas größer aus
+(die unbegrünte Bodenkurve erreicht mittags rund 38,5 °C statt rund 37,3 °C).
 
 Mittelwerte je Tageszeit (unbegrünt minus begrünt, positiv bedeutet begrünte Straße kühler):
 
@@ -64,5 +69,7 @@ Tagesgang werden die Kampagnentage nicht zusammengefasst.
 
 ## Erzeugte Dateien
 
-`plots/oberflaeche_zeitverlauf_boden.png` (Boden, begrünt vs. unbegrünt)
-`plots/oberflaeche_zeitverlauf_wand.png` (Wand, begrünt vs. unbegrünt)
+`plots/oberflaeche_zeitverlauf_boden_alle.png` (Boden, alle Stationen)
+`plots/oberflaeche_zeitverlauf_boden_auswahl.png` (Boden, Auswahl 2, 4, 5, 7)
+`plots/oberflaeche_zeitverlauf_wand_alle.png` (Wand, alle Stationen)
+`plots/oberflaeche_zeitverlauf_wand_auswahl.png` (Wand, Auswahl 2, 4, 5, 7)
