@@ -74,7 +74,7 @@ p1 <- ggplot() +
   scale_y_continuous(breaks = scales::breaks_width(2), minor_breaks = scales::breaks_width(1)) +
   coord_cartesian(xlim = zeitbereich) +
   labs(title = "Lufttemperatur (stationäre nMetos-Stationen)",
-       subtitle = "Gleichzeitig gemessen für beide Straßen; die begrünte bleibt durchweg kühler, kein 15-Uhr-Peak",
+       subtitle = "Gleichzeitig gemessen für beide Straßen; die begrünte bleibt durchweg kühler",
        x = "Zeit", y = "Lufttemperatur (°C)",
        caption = "Hintergrund: hellgelb = Tag") +
   theme_minimal(base_size = 12) +
