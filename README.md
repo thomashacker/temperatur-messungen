@@ -29,6 +29,7 @@ Methode, Kennzahlen, Kurzinterpretation, Begriffe).
 | Skript | Inhalt |
 |--------|--------|
 | `lufttemperatur_strassenvergleich.R` | Lufttemperatur im Zeitverlauf, begrünt vs. unbegrünt, mit Statistik |
+| `lufttemperatur_boxplot.R` | Lufttemperatur als Boxplots je Tageszeit, mit Kennzahlen |
 | `oberflaeche_boxplot.R` | Oberflächentemperatur (Boden/Wand) als Boxplots je Tageszeit, mit Kennzahlen |
 | `oberflaeche_zeitverlauf.R` | Oberflächentemperatur (Boden, Wand) im Zeitverlauf |
 | `einstrahlung_zeitverlauf.R` | Einstrahlung im Zeitverlauf (erklärt einen Ausreißer der Lufttemperatur) |
