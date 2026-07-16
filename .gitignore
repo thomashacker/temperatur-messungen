@@ -5,3 +5,7 @@
 .Rhistory
 .RData
 .Rproj.user/
+
+# Daten (nicht im Repo, siehe README.md, Setup)
+data/
+*.rds

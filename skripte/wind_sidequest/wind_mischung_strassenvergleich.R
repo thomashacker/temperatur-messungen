@@ -12,7 +12,19 @@ library(ggplot2)
 library(lubridate)
 
 # --- Daten laden ----------------------------------------------------------
-Messkampagne <- readRDS("/Users/edwardschmuhl/Desktop/Work/Forks/Hannah_Abschlussbericht_Temperaturmessung_2026/CONTEXT/campaign_2026.rds")
+# Portabler Datenpfad: die Datei campaign_2026.rds liegt NICHT im Repository
+# (siehe README.md, Abschnitt Setup). Suchreihenfolge: 1) Umgebungsvariable
+# CAMPAIGN_RDS, 2) ein data/-Ordner im Repo, 3) der CONTEXT-Ordner neben dem
+# Repo. Skripte werden aus ihrem eigenen Ordner ausgeführt (wie die ggsave-Pfade).
+datenpfad <- Sys.getenv("CAMPAIGN_RDS", unset = NA)
+if (is.na(datenpfad) || !file.exists(datenpfad)) {
+  kandidaten <- c("data/campaign_2026.rds", "../data/campaign_2026.rds",
+                  "../../data/campaign_2026.rds", "../CONTEXT/campaign_2026.rds",
+                  "../../CONTEXT/campaign_2026.rds", "../../../CONTEXT/campaign_2026.rds")
+  datenpfad <- kandidaten[file.exists(kandidaten)][1]
+}
+if (is.na(datenpfad)) stop("campaign_2026.rds nicht gefunden. Siehe README.md (Setup).")
+Messkampagne <- readRDS(datenpfad)
 Daten <- filter(Messkampagne$data, visit_status == "ok")
 
 # --- Aufbereitung ---------------------------------------------------------
