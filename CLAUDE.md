@@ -212,11 +212,13 @@ stringr, lubridate, tibble, purrr), **rmarkdown/knitr**, **pandoc 3.10**, **Tiny
 ```
 Abschlussbericht/
   CLAUDE.md          # diese Datei
-  skripte/           # R-Skripte: EIN Skript pro Auswertung/Grafik
-                     #   + je Skript eine gleichnamige .md mit den Ergebnissen
-    wind_sidequest/  # abgeschlossene Nebenuntersuchung Wind (kein klares Ergebnis)
-  plots/             # erzeugte Grafiken (PNG)
-    wind_sidequest/  # Grafiken der Wind-Nebenuntersuchung
+  skripte/                 # R-Skripte: EIN Skript pro Auswertung/Grafik
+                           #   + je Skript eine gleichnamige .md mit den Ergebnissen
+    wind_sidequest/        # Nebenuntersuchung Wind (kein klares Ergebnis)
+    zeitversatz_sidequest/ # Nebenuntersuchung Zeitversatz Boden/Wand (Sonnengeometrie)
+  plots/                   # erzeugte Grafiken (PNG)
+    wind_sidequest/
+    zeitversatz_sidequest/
 ```
 
 > **Hinweis Wind-Sidequest:** Die Untersuchung, ob der Wind den Mittags-Spike erklärt, liegt

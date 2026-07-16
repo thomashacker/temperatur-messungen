@@ -15,10 +15,12 @@ Die Kampagne umfasst 40 Messrunden über rund 40 Stunden (18. bis 20.06.2026) an
 ├── README.md            # diese Datei
 ├── skripte/             # R-Skripte, je ein Skript pro Auswertung
 │   ├── *.R              #   die Analyse
-│   ├── *.md             #   der zugehörige deutsche Ergebnisbericht (gleicher Name)
-│   └── wind_sidequest/  #   abgeschlossene Nebenuntersuchung Wind (kein klares Ergebnis)
-└── plots/               # erzeugte Grafiken (PNG)
-    └── wind_sidequest/  #   Grafiken der Wind-Nebenuntersuchung
+│   ├── *.md                    #   der zugehörige deutsche Ergebnisbericht (gleicher Name)
+│   ├── wind_sidequest/         #   Nebenuntersuchung Wind (kein klares Ergebnis)
+│   └── zeitversatz_sidequest/  #   Nebenuntersuchung Zeitversatz der Aufwärmung
+└── plots/                      # erzeugte Grafiken (PNG)
+    ├── wind_sidequest/
+    └── zeitversatz_sidequest/
 ```
 
 Zu **jedem Skript** gehört eine gleichnamige `.md`-Datei mit dem Ergebnisbericht (verwendete Daten,
@@ -34,6 +36,7 @@ Methode, Kennzahlen, Kurzinterpretation, Begriffe).
 | `oberflaeche_zeitverlauf.R` | Oberflächentemperatur (Boden, Wand) im Zeitverlauf |
 | `einstrahlung_zeitverlauf.R` | Einstrahlung im Zeitverlauf (erklärt einen Ausreißer der Lufttemperatur) |
 | `wind_sidequest/` | Nebenuntersuchung, ob der Wind einen Ausreißer erklärt (Ergebnis: nein) |
+| `zeitversatz_sidequest/` | Nebenuntersuchung, warum sich Boden/Wand und die Straßen zeitversetzt aufwärmen (Sonnengeometrie) |
 
 ## Voraussetzungen
 
