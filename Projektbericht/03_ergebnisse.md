@@ -35,17 +35,17 @@ Die statistische Prüfung bestätigt das (Tabelle 1). Tagsüber ist die baumlose
 ein kleiner, aber ebenfalls signifikanter Rest von 0,44 °C (Boden) und 0,86 °C (Wand). H1 wird damit
 klar bestätigt.
 
-**Tabelle 1:** Mittlere Differenz der Oberflächentemperatur (unbegrünt minus begrünt) und gepaarter
-t-Test pro Runde, alle Stationen. Positiv bedeutet baumlose Straße wärmer.
+**Tabelle 1:** Mittlere Differenz der Oberflächentemperatur (unbegrünt minus begrünt) sowie gepaarter
+t-Test und Wilcoxon-Test pro Runde, alle Stationen. Positiv bedeutet baumlose Straße wärmer.
 
-| Oberfläche | Tageszeit | Differenz (°C) | t | df | p |
-|------------|-----------|----------------|-----|----|-----|
-| Boden | Gesamt | +2,39 | 5,12 | 39 | 8,7e-06 |
-| Boden | Tag | +3,44 | 5,46 | 25 | 1,1e-05 |
-| Boden | Nacht | +0,44 | 5,31 | 13 | 1,4e-04 |
-| Wand | Gesamt | +3,31 | 7,51 | 39 | 4,4e-09 |
-| Wand | Tag | +4,63 | 9,12 | 25 | 2,0e-09 |
-| Wand | Nacht | +0,86 | 4,68 | 13 | 4,3e-04 |
+| Oberfläche | Tageszeit | Differenz (°C) | t | df | p (t-Test) | p (Wilcoxon) |
+|------------|-----------|----------------|-----|----|-----------|--------------|
+| Boden | Gesamt | +2,39 | 5,12 | 39 | 8,7e-06 | 1,0e-10 |
+| Boden | Tag | +3,44 | 5,46 | 25 | 1,1e-05 | 1,5e-07 |
+| Boden | Nacht | +0,44 | 5,31 | 13 | 1,4e-04 | 6,1e-04 |
+| Wand | Gesamt | +3,31 | 7,51 | 39 | 4,4e-09 | 5,2e-08 |
+| Wand | Tag | +4,63 | 9,12 | 25 | 2,0e-09 | 8,8e-06 |
+| Wand | Nacht | +0,86 | 4,68 | 13 | 4,3e-04 | 6,1e-04 |
 
 ## 3.2 Lufttemperatur (H2)
 
@@ -77,17 +77,17 @@ Nachts fällt der Befund uneinheitlich aus. In der mobilen Messung ist die begr�
 minimal wärmer (0,15 °C), in den stationären Daten dagegen die baumlose (0,20 °C). Beide Werte sind
 sehr klein und werden in der Diskussion eingeordnet.
 
-**Tabelle 2:** Mittlere Differenz der Lufttemperatur (unbegrünt minus begrünt) und gepaarter t-Test
-pro Runde, für die mobile und die stationäre Messung.
+**Tabelle 2:** Mittlere Differenz der Lufttemperatur (unbegrünt minus begrünt) sowie gepaarter t-Test
+und Wilcoxon-Test pro Runde, für die mobile und die stationäre Messung.
 
-| Quelle | Tageszeit | Differenz (°C) | t | df | p |
-|--------|-----------|----------------|-----|----|-----|
-| mobil | Gesamt | +0,22 | 1,74 | 39 | 0,089 |
-| mobil | Tag | +0,42 | 2,28 | 25 | 0,031 |
-| mobil | Nacht | −0,15 | −6,42 | 13 | 2,3e-05 |
-| stationär | Gesamt | +0,58 | 6,92 | 39 | 2,7e-08 |
-| stationär | Tag | +0,78 | 7,25 | 25 | 1,3e-07 |
-| stationär | Nacht | +0,20 | 6,04 | 13 | 4,2e-05 |
+| Quelle | Tageszeit | Differenz (°C) | t | df | p (t-Test) | p (Wilcoxon) |
+|--------|-----------|----------------|-----|----|-----------|--------------|
+| mobil | Gesamt | +0,22 | 1,74 | 39 | 0,089 | 0,141 |
+| mobil | Tag | +0,42 | 2,28 | 25 | 0,031 | 0,015 |
+| mobil | Nacht | −0,15 | −6,42 | 13 | 2,3e-05 | 1,4e-03 |
+| stationär | Gesamt | +0,58 | 6,92 | 39 | 2,7e-08 | 1,8e-12 |
+| stationär | Tag | +0,78 | 7,25 | 25 | 1,3e-07 | 3,0e-08 |
+| stationär | Nacht | +0,20 | 6,04 | 13 | 4,2e-05 | 1,2e-04 |
 
 ## 3.3 Ein Ausschlag in der mobilen Messung
 

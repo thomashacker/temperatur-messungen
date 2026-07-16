@@ -55,7 +55,9 @@ Für jede Gruppe wurden beschreibende Kennzahlen berechnet, unter anderem Mittel
 Standardabweichung und Interquartilsabstand. Der Unterschied zwischen den Straßen wurde mit einem
 gepaarten t-Test pro Runde geprüft. Gepaart bedeutet, dass in jeder Runde die begrünte und die
 unbegrünte Straße direkt gegenübergestellt werden, sodass allgemeine Schwankungen von Runde zu Runde
-herausfallen. Getestet wurde jeweils für den Gesamtzeitraum, für den Tag und für die Nacht.
+herausfallen. Getestet wurde jeweils für den Gesamtzeitraum, für den Tag und für die Nacht. Zur
+Absicherung wurde jeder Test zusätzlich mit dem verteilungsfreien Wilcoxon-Test gerechnet, der keine
+Normalverteilung voraussetzt. Beide Tests führten zu denselben Aussagen (siehe Tabellen 1 und 2).
 
 Durchgehend gilt die Konvention, dass die Differenz als unbegrünt minus begrünt angegeben wird. Ein
 positiver Wert bedeutet also, dass die baumlose Straße wärmer ist, die Bäume also kühlend wirken.
