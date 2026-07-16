@@ -1,8 +1,5 @@
 #' Lufttemperatur: Begrünte vs. unbegrünte Straße
-#' Abschlussbericht Datenanalyse Stadtklima 2026
-#' Vergleich der beiden Straßen einmal mit ALLEN Stationen und einmal mit einer
-#' AUSWAHL, aus der die stark besonnten Stationen (1, 3, 6, 8) entfernt wurden.
-#' Erzeugt zwei Grafiken (gleicher Stil/Farben wie das Vorbild) und alle Kennzahlen.
+#' Vergleich beider Straßen (alle Stationen und Auswahl 2,4,5,7) mit Grafiken und Kennzahlen.
 #' Autor: Hannah Balle
 
 # --- Pakete ---------------------------------------------------------------
@@ -11,45 +8,30 @@ library(ggplot2)
 library(lubridate)
 library(tidyr)
 
-# --- Daten laden ----------------------------------------------------------
-# Portabler Datenpfad: die Datei campaign_2026.rds liegt NICHT im Repository
-# (siehe README.md, Abschnitt Setup). Suchreihenfolge: 1) Umgebungsvariable
-# CAMPAIGN_RDS, 2) ein data/-Ordner im Repo, 3) der CONTEXT-Ordner neben dem
-# Repo. Skripte werden aus ihrem eigenen Ordner ausgeführt (wie die ggsave-Pfade).
-datenpfad <- Sys.getenv("CAMPAIGN_RDS", unset = NA)
-if (is.na(datenpfad) || !file.exists(datenpfad)) {
-  kandidaten <- c("data/campaign_2026.rds", "../data/campaign_2026.rds",
-                  "../../data/campaign_2026.rds", "../CONTEXT/campaign_2026.rds",
-                  "../../CONTEXT/campaign_2026.rds", "../../../CONTEXT/campaign_2026.rds")
-  datenpfad <- kandidaten[file.exists(kandidaten)][1]
-}
-if (is.na(datenpfad)) stop("campaign_2026.rds nicht gefunden. Siehe README.md (Setup).")
+# --- Pfade (bei Bedarf anpassen) ---
+datenpfad <- "../../CONTEXT/campaign_2026.rds"  # Kampagnendatei
+plotpfad  <- "../plots/"                        # Zielordner der Grafiken
+
 Messkampagne <- readRDS(datenpfad)
 Daten <- Messkampagne$data
 
 # --- Aufbereitung ---------------------------------------------------------
-# Nur gültige Stationsbesuche verwenden (die 3 "missing_visit" fallen raus).
+# Nur gültige Stationsbesuche (die 3 "missing_visit" fallen raus).
 Daten <- filter(Daten, visit_status == "ok")
 
-# Straßentyp aus der Stationsnummer ableiten:
-# station_order 1–4 = begrünte Straße (Husemann), 5–8 = unbegrünte Straße (Hagenauer).
+# Straßentyp aus der Stationsnummer: 1–4 begrünt (Husemann), 5–8 unbegrünt (Hagenauer).
 Daten <- Daten %>%
   mutate(strasse = case_when(
     station_order %in% 1:4 ~ "Begrünte Straße",
     station_order %in% 5:8 ~ "Unbegrünte Straße"
   ))
 
-# Stationen, die stark der Sonne ausgesetzt waren und in der Auswahl entfallen.
-# Übrig bleiben die repräsentativeren Stationen 2, 4, 5, 7.
+# Auswahl ohne die stark besonnten Stationen; übrig: die repräsentativeren 2, 4, 5, 7.
 auswahl_stationen <- c(2, 4, 5, 7)
 
-# =========================================================================
-#  TEIL A — GRAFIKEN (stündliche Mittelwerte je Straße)
-# =========================================================================
+# --- TEIL A: Grafiken (stündliche Mittelwerte je Straße) ---
 
-# --- Stündliche Aggregation je Straße -------------------------------------
-# Mittelt die Lufttemperatur pro Stunde je Straßentyp; optional nur auf
-# ausgewählte station_order-Werte gefiltert (NULL = alle Stationen).
+# Stundenmittel der Lufttemperatur je Straße; stationen = NULL heißt alle Stationen.
 aggregiere_ta <- function(df, stationen = NULL) {
   if (!is.null(stationen)) df <- filter(df, station_order %in% stationen)
   df %>%
@@ -61,8 +43,7 @@ aggregiere_ta <- function(df, stationen = NULL) {
 Temp_alle    <- aggregiere_ta(Daten)
 Temp_auswahl <- aggregiere_ta(Daten, auswahl_stationen)
 
-# --- Tag-Rechtecke (05–22 Uhr je Kalendertag) -----------------------------
-# Aus dem vollen Zeitbereich berechnet, damit beide Grafiken dieselbe x-Achse haben.
+# --- Tag-Rechtecke (05–22 Uhr je Kalendertag), voller Zeitbereich für gleiche x-Achse ---
 tzone <- tz(Temp_alle$stunde)
 tage  <- seq(as.Date(min(Temp_alle$stunde), tz = tzone),
              as.Date(max(Temp_alle$stunde), tz = tzone), by = "day")
@@ -72,8 +53,7 @@ tag_rechtecke <- tibble(
 )
 zeitbereich <- range(Temp_alle$stunde, na.rm = TRUE)
 
-# --- Gemeinsamer y-Bereich ------------------------------------------------
-# Über beide Datensätze berechnet, damit die Temperaturachse identisch ist.
+# --- Gemeinsamer y-Bereich über beide Datensätze, damit die Temperaturachse identisch ist ---
 y_bereich <- range(c(Temp_alle$Ta_mittel, Temp_auswahl$Ta_mittel), na.rm = TRUE)
 
 # --- Plot-Funktion (Linien + Punkte, Tag/Nacht-Hintergrund) ---------------
@@ -103,16 +83,14 @@ plot_alle    <- plotte_ta(Temp_alle,    "Alle Stationen")
 plot_auswahl <- plotte_ta(Temp_auswahl, "Auswahl: Stationen 2, 4, 5, 7 (ohne stark besonnte)")
 
 # --- Grafiken speichern ---------------------------------------------------
-ggsave("../plots/lufttemperatur_alle_stationen.png", plot_alle,
+ggsave(paste0(plotpfad, "lufttemperatur_alle_stationen.png"), plot_alle,
        width = 9, height = 5, dpi = 150, bg = "white")
-ggsave("../plots/lufttemperatur_auswahl_stationen.png", plot_auswahl,
+ggsave(paste0(plotpfad, "lufttemperatur_auswahl_stationen.png"), plot_auswahl,
        width = 9, height = 5, dpi = 150, bg = "white")
 
-# =========================================================================
-#  TEIL B — STATISTIK
-# =========================================================================
+# --- TEIL B: Statistik ---
 
-# --- Hilfsfunktion: deskriptive Kennzahlen je Vektor ----------------------
+# Deskriptive Kennzahlen je Vektor.
 kennzahlen <- function(x) {
   tibble(
     n          = sum(!is.na(x)),
@@ -126,16 +104,14 @@ kennzahlen <- function(x) {
   )
 }
 
-# --- Hilfsfunktion: Anzahl Ausreißer nach der 1,5·IQR-Regel ---------------
-# Werte unterhalb Q25 - 1,5·IQR oder oberhalb Q75 + 1,5·IQR gelten als Ausreißer.
+# Anzahl Ausreißer nach der 1,5·IQR-Regel (außerhalb Q25-1,5·IQR bzw. Q75+1,5·IQR).
 ausreisser_anzahl <- function(x) {
   q <- quantile(x, c(0.25, 0.75), na.rm = TRUE)
   iqr <- q[2] - q[1]
   sum(x < q[1] - 1.5 * iqr | x > q[2] + 1.5 * iqr, na.rm = TRUE)
 }
 
-# --- Mittlere Differenz auf den STUNDENMITTELN (passend zur Grafik) --------
-# Unbegrünt minus begrünt; positiv = unbegrünte Straße wärmer (Baumstraße kühler).
+# Mittlere Differenz auf den Stundenmitteln; unbegrünt minus begrünt (positiv = Baumstraße kühler).
 mittlere_differenz_stunde <- function(temp) {
   temp %>%
     pivot_wider(names_from = strasse, values_from = Ta_mittel) %>%
@@ -143,8 +119,7 @@ mittlere_differenz_stunde <- function(temp) {
     pull(diff)
 }
 
-# --- Paarung pro Runde (methodisch ehrlicher, gegen Pseudoreplikation) -----
-# Je Runde ein Mittelwert pro Straße -> die 40 Runden sind die Vergleichseinheiten.
+# Paarung pro Runde (gegen Pseudoreplikation): je Runde ein Mittel pro Straße, 40 Vergleichseinheiten.
 paar_pro_runde <- function(df, stationen = NULL) {
   if (!is.null(stationen)) df <- filter(df, station_order %in% stationen)
   df %>%
@@ -153,9 +128,7 @@ paar_pro_runde <- function(df, stationen = NULL) {
     pivot_wider(names_from = strasse, values_from = m)
 }
 
-# -------------------------------------------------------------------------
-#  TEIL B1 — Alle Stationen vs. Auswahl: warum die Auswahl sinnvoller ist
-# -------------------------------------------------------------------------
+# --- TEIL B1: Alle Stationen vs. Auswahl (warum die Auswahl sinnvoller ist) ---
 Daten_auswahl <- filter(Daten, station_order %in% auswahl_stationen)
 
 cat("### TEIL B1: ALLE STATIONEN vs. AUSWAHL ###\n\n")
@@ -179,9 +152,7 @@ cat("\n== Mittlere Differenz (unbegrünt - begrünt), Stundenmittel ==\n")
 cat(sprintf("  ALLE Stationen : %+.3f °C\n", mittlere_differenz_stunde(Temp_alle)))
 cat(sprintf("  AUSWAHL 2,4,5,7: %+.3f °C\n", mittlere_differenz_stunde(Temp_auswahl)))
 
-# -------------------------------------------------------------------------
-#  TEIL B2 — Statistik nur auf der Auswahl
-# -------------------------------------------------------------------------
+# --- TEIL B2: Statistik nur auf der Auswahl ---
 cat("\n\n### TEIL B2: STATISTIK NUR AUF DER AUSWAHL (2,4,5,7) ###\n\n")
 
 cat("== Deskriptive Kennzahlen je Straße ==\n")

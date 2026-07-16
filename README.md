@@ -51,52 +51,45 @@ install.packages(c("dplyr", "tidyr", "ggplot2", "lubridate", "scales"))
 # oder einfach: install.packages("tidyverse")
 ```
 
-## Setup: Datendatei bereitstellen
+## Setup: Datendatei und Pfade
 
-Die Analyse braucht die Datei **`campaign_2026.rds`**. Sie ist **nicht Teil dieses Repositories**
-(Forschungsdaten). Es gibt zwei Wege, sie den Skripten bekannt zu machen:
+Die Analyse braucht die Datei `campaign_2026.rds`. Sie ist nicht Teil dieses Repositories
+(Forschungsdaten) und muss separat bereitgestellt werden.
 
-**Variante A (empfohlen): Ordner `data/`**
+Jedes Skript hat oben, direkt nach den `library()`-Aufrufen, zwei Pfadvariablen, die bei Bedarf
+angepasst werden:
 
-Lege die Datei unter `data/campaign_2026.rds` im Projektwurzelverzeichnis ab:
-
-```
-Abschlussbericht_FINAL/
-└── data/
-    └── campaign_2026.rds
-```
-
-Der Ordner `data/` ist per `.gitignore` vom Versionieren ausgeschlossen, die Daten landen also
-nicht versehentlich im Repository.
-
-**Variante B: Umgebungsvariable**
-
-Setze `CAMPAIGN_RDS` auf den vollständigen Pfad der Datei:
-
-```bash
-export CAMPAIGN_RDS="/pfad/zu/campaign_2026.rds"
+```r
+# --- Pfade (bei Bedarf anpassen) ---
+datenpfad <- "../../CONTEXT/campaign_2026.rds"  # Pfad zur Kampagnendatei
+plotpfad  <- "../plots/"                        # Zielordner der Grafiken
 ```
 
-Jedes Skript sucht die Datei automatisch in dieser Reihenfolge: zuerst `CAMPAIGN_RDS`, dann ein
-`data/`-Ordner, dann ein `CONTEXT/`-Ordner neben dem Repository. Wird nichts gefunden, bricht das
-Skript mit einer klaren Meldung ab.
+Die Pfade sind relativ und gehen davon aus, dass das Skript aus seinem eigenen Ordner ausgeführt
+wird (siehe unten). Die Skripte in den Unterordnern `wind_sidequest/` und `zeitversatz_sidequest/`
+haben entsprechend tiefere Pfade (`../../../CONTEXT/...` und `../../plots/<unterordner>/`). Wer die
+Datei woanders liegen hat, ändert einfach `datenpfad`.
 
 ## Skripte ausführen
 
-Wichtig: Die Skripte werden **aus ihrem eigenen Ordner** ausgeführt, weil die Grafiken über
-relative Pfade (`../plots/`) gespeichert werden.
+Wichtig: Die Skripte werden **aus ihrem eigenen Ordner** ausgeführt, weil die Pfadvariablen relativ
+sind (`datenpfad`, `plotpfad`).
 
 ```bash
 cd skripte
 Rscript lufttemperatur_strassenvergleich.R
+Rscript lufttemperatur_boxplot.R
+Rscript lufttemperatur_stationaer.R
 Rscript oberflaeche_boxplot.R
 Rscript oberflaeche_zeitverlauf.R
 Rscript einstrahlung_zeitverlauf.R
 
-# Nebenuntersuchung Wind
+# Nebenuntersuchungen
 cd wind_sidequest
 Rscript wind_mischung_strassenvergleich.R
 Rscript wind_effekt_strahlungskontrolle.R
+cd ../zeitversatz_sidequest
+Rscript zeitversatz_aufwaermung.R
 ```
 
 Die Grafiken werden nach `plots/` geschrieben, die Kennzahlen erscheinen in der Konsole und stehen

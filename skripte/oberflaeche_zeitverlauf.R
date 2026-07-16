@@ -1,9 +1,6 @@
 #' Oberflächentemperatur im Zeitverlauf: Boden und Wand, begrünt vs. unbegrünt
-#' Abschlussbericht Datenanalyse Stadtklima 2026
-#' Liniendiagramme (Boden und Wand) im Stil der Lufttemperatur-Grafik, je eine
-#' Linie pro Straße, ganzer Zeitverlauf mit Tag/Nacht-Hintergrund.
-#' Zwei Varianten (alle Stationen und Auswahl 2, 4, 5, 7), analog zu den übrigen
-#' Skripten. Autor: Hannah Balle
+#' Liniendiagramme (Boden/Wand) je Straße über den vollen Zeitverlauf, zwei Varianten (alle Stationen und Auswahl 2, 4, 5, 7).
+#' Autor: Hannah Balle
 
 # --- Pakete ---------------------------------------------------------------
 library(dplyr)
@@ -11,19 +8,10 @@ library(tidyr)
 library(ggplot2)
 library(lubridate)
 
-# --- Daten laden ----------------------------------------------------------
-# Portabler Datenpfad: die Datei campaign_2026.rds liegt NICHT im Repository
-# (siehe README.md, Abschnitt Setup). Suchreihenfolge: 1) Umgebungsvariable
-# CAMPAIGN_RDS, 2) ein data/-Ordner im Repo, 3) der CONTEXT-Ordner neben dem
-# Repo. Skripte werden aus ihrem eigenen Ordner ausgeführt (wie die ggsave-Pfade).
-datenpfad <- Sys.getenv("CAMPAIGN_RDS", unset = NA)
-if (is.na(datenpfad) || !file.exists(datenpfad)) {
-  kandidaten <- c("data/campaign_2026.rds", "../data/campaign_2026.rds",
-                  "../../data/campaign_2026.rds", "../CONTEXT/campaign_2026.rds",
-                  "../../CONTEXT/campaign_2026.rds", "../../../CONTEXT/campaign_2026.rds")
-  datenpfad <- kandidaten[file.exists(kandidaten)][1]
-}
-if (is.na(datenpfad)) stop("campaign_2026.rds nicht gefunden. Siehe README.md (Setup).")
+# --- Pfade (bei Bedarf anpassen) ---
+datenpfad <- "../../CONTEXT/campaign_2026.rds"  # Kampagnendatei
+plotpfad  <- "../plots/"                        # Zielordner der Grafiken
+
 Messkampagne <- readRDS(datenpfad)
 Daten <- filter(Messkampagne$data, visit_status == "ok")
 
@@ -57,8 +45,7 @@ stundenmittel <- function(stationen = NULL) {
 mess_alle    <- stundenmittel(NULL)
 mess_auswahl <- stundenmittel(auswahl_stationen)
 
-# --- Gemeinsame Achsen (aus beiden Varianten) -----------------------------
-# Tag-Rechtecke (05–22 Uhr je Kalendertag) über den vollen Zeitbereich.
+# --- Gemeinsame Achsen (aus beiden Varianten): Tag-Rechtecke 05–22 Uhr je Kalendertag ---
 alle_stunden <- c(mess_alle$stunde, mess_auswahl$stunde)
 tzone <- tz(alle_stunden)
 tage  <- seq(as.Date(min(alle_stunden), tz = tzone),
@@ -94,7 +81,7 @@ plotte_ts <- function(daten, typ, titel, untertitel, dateiname) {
           plot.subtitle = element_text(colour = "grey40"),
           axis.title = element_text(size = 14), axis.text = element_text(size = 11),
           legend.position = "bottom")
-  ggsave(paste0("../plots/", dateiname), p, width = 10, height = 5.5, dpi = 200, bg = "white")
+  ggsave(paste0(plotpfad, dateiname), p, width = 10, height = 5.5, dpi = 200, bg = "white")
 }
 
 # --- Vier Grafiken erzeugen (Boden/Wand x alle/Auswahl) -------------------

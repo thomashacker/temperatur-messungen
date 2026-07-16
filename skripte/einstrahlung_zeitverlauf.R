@@ -1,9 +1,5 @@
 #' Einstrahlung im Zeitverlauf: begrünte vs. unbegrünte Straße
-#' Abschlussbericht Datenanalyse Stadtklima 2026
-#' Zeigt, dass die Einstrahlung der unbegrünten Straße am 19.06. am frühen Nachmittag
-#' plötzlich einbricht (durchziehende Wolke), was den 15-Uhr-Spike der Lufttemperatur
-#' miterklärt. Gleiche Optik wie die Lufttemperatur-Grafik.
-#' Zwei Varianten (alle Stationen und Auswahl 2, 4, 5, 7), analog zu den übrigen Skripten.
+#' Zeigt den nachmittäglichen Einstrahlungs-Einbruch am 19.06. (Wolke), der den 15-Uhr-Temperatur-Spike miterklärt.
 #' Autor: Hannah Balle
 
 # --- Pakete ---------------------------------------------------------------
@@ -11,19 +7,10 @@ library(dplyr)
 library(ggplot2)
 library(lubridate)
 
-# --- Daten laden ----------------------------------------------------------
-# Portabler Datenpfad: die Datei campaign_2026.rds liegt NICHT im Repository
-# (siehe README.md, Abschnitt Setup). Suchreihenfolge: 1) Umgebungsvariable
-# CAMPAIGN_RDS, 2) ein data/-Ordner im Repo, 3) der CONTEXT-Ordner neben dem
-# Repo. Skripte werden aus ihrem eigenen Ordner ausgeführt (wie die ggsave-Pfade).
-datenpfad <- Sys.getenv("CAMPAIGN_RDS", unset = NA)
-if (is.na(datenpfad) || !file.exists(datenpfad)) {
-  kandidaten <- c("data/campaign_2026.rds", "../data/campaign_2026.rds",
-                  "../../data/campaign_2026.rds", "../CONTEXT/campaign_2026.rds",
-                  "../../CONTEXT/campaign_2026.rds", "../../../CONTEXT/campaign_2026.rds")
-  datenpfad <- kandidaten[file.exists(kandidaten)][1]
-}
-if (is.na(datenpfad)) stop("campaign_2026.rds nicht gefunden. Siehe README.md (Setup).")
+# --- Pfade (bei Bedarf anpassen) ---
+datenpfad <- "../../CONTEXT/campaign_2026.rds"  # Kampagnendatei
+plotpfad  <- "../plots/"                        # Zielordner der Grafiken
+
 Messkampagne <- readRDS(datenpfad)
 Daten <- filter(Messkampagne$data, visit_status == "ok")
 
@@ -38,7 +25,7 @@ mess <- Daten %>%
          zeit = beginn_local_parsed,
          ShortIn = humve_meteo_ShortIn_mean)
 
-# --- Gemeinsame Achsen (aus ALLEN Stationen, damit beide Grafiken gleich sind) ---
+# --- Gemeinsame Achsen (aus allen Stationen, damit beide Grafiken gleich sind) ---
 # Tag-Rechtecke (05–22 Uhr je Kalendertag) über den vollen Zeitbereich.
 tzone <- tz(mess$zeit)
 tage  <- seq(as.Date(min(mess$zeit), tz = tzone),
@@ -53,9 +40,7 @@ y_bereich   <- c(0, max(mess$ShortIn, na.rm = TRUE))   # gemeinsame y-Achse
 # Zeitpunkt des Lufttemperatur-Spikes (19.06., 15 Uhr, Runde 22).
 spike_zeit <- as.POSIXct("2026-06-19 15:00:00", tz = tzone)
 
-# --- Plot-Funktion --------------------------------------------------------
-# Linien = Stundenmittel je Straße (nur die geglätteten Linien, keine Einzelpunkte).
-# Baut auf den gemeinsamen Achsen auf.
+# --- Plot-Funktion: Stundenmittel je Straße auf gemeinsamen Achsen ---
 plotte_einstrahlung <- function(stationen, untertitel, dateiname) {
   df <- if (is.null(stationen)) mess else filter(mess, station_order %in% stationen)
   stunden <- df %>%
@@ -86,7 +71,7 @@ plotte_einstrahlung <- function(stationen, untertitel, dateiname) {
           plot.subtitle = element_text(colour = "grey40"),
           axis.title = element_text(size = 13), legend.position = "bottom")
 
-  ggsave(paste0("../plots/", dateiname), p, width = 10, height = 5.5, dpi = 200, bg = "white")
+  ggsave(paste0(plotpfad, dateiname), p, width = 10, height = 5.5, dpi = 200, bg = "white")
 }
 
 # --- Beide Varianten erzeugen ---------------------------------------------

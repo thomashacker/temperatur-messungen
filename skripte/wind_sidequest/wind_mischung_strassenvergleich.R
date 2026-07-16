@@ -1,36 +1,22 @@
 #' Wind und Durchmischung: begrünte vs. unbegrünte Straße
-#' Abschlussbericht Datenanalyse Stadtklima 2026
-#' Untersucht die Hypothese, dass die begrünte Straße windstiller und schlechter
-#' durchmischt ist und deshalb die Luftkühlung gedämpft wird.
-#' Grundlage: Auswahl 2, 4, 5, 7 (ohne stark besonnte Stationen).
-#' Erzeugt drei Grafiken plus Kennzahlen. Autor: Hannah Balle
+#' Abschlussbericht Datenanalyse Stadtklima 2026. Autor: Hannah Balle
+#' Prüft, ob die begrünte Straße windstiller/schlechter durchmischt ist (Auswahl 2, 4, 5, 7).
 
-# --- Pakete ---------------------------------------------------------------
+# --- Pakete ---
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(lubridate)
 
-# --- Daten laden ----------------------------------------------------------
-# Portabler Datenpfad: die Datei campaign_2026.rds liegt NICHT im Repository
-# (siehe README.md, Abschnitt Setup). Suchreihenfolge: 1) Umgebungsvariable
-# CAMPAIGN_RDS, 2) ein data/-Ordner im Repo, 3) der CONTEXT-Ordner neben dem
-# Repo. Skripte werden aus ihrem eigenen Ordner ausgeführt (wie die ggsave-Pfade).
-datenpfad <- Sys.getenv("CAMPAIGN_RDS", unset = NA)
-if (is.na(datenpfad) || !file.exists(datenpfad)) {
-  kandidaten <- c("data/campaign_2026.rds", "../data/campaign_2026.rds",
-                  "../../data/campaign_2026.rds", "../CONTEXT/campaign_2026.rds",
-                  "../../CONTEXT/campaign_2026.rds", "../../../CONTEXT/campaign_2026.rds")
-  datenpfad <- kandidaten[file.exists(kandidaten)][1]
-}
-if (is.na(datenpfad)) stop("campaign_2026.rds nicht gefunden. Siehe README.md (Setup).")
+# --- Pfade (bei Bedarf anpassen) ---
+datenpfad <- "../../../CONTEXT/campaign_2026.rds"   # Kampagnendatei
+plotpfad  <- "../../plots/wind_sidequest/"          # Zielordner der Grafiken
+
 Messkampagne <- readRDS(datenpfad)
 Daten <- filter(Messkampagne$data, visit_status == "ok")
 
-# --- Aufbereitung ---------------------------------------------------------
-# Straßentyp, Uhrzeit, Tag/Nacht, Auswahl der Stationen und Mischungskennzahlen.
-# TKE (turbulente kinetische Energie) = 0,5 * (Var_u + Var_v + Var_w), ein Maß für
-# die Gesamtdurchmischung. Cov_wTv ist der turbulente Wärmefluss nach oben.
+# --- Aufbereitung ---
+# TKE = 0,5*(Var_u+Var_v+Var_w) misst die Gesamtdurchmischung, Cov_wTv den Wärmefluss nach oben.
 auswahl_stationen <- c(2, 4, 5, 7)
 
 daten_auf <- Daten %>%
@@ -54,10 +40,7 @@ sel$strasse <- factor(sel$strasse, levels = names(farben_strasse))
 tag_band <- annotate("rect", xmin = 5, xmax = 22, ymin = -Inf, ymax = Inf,
                      fill = "lightyellow", alpha = 0.45)
 
-# =========================================================================
-#  GRAFIK 1 (Kernbild) — Differenz über Differenz im Tagesgang
-#  Oben die Temperatur-Differenz, unten die Wind-Differenz (begrünt minus unbegrünt).
-# =========================================================================
+# --- Grafik 1: Differenz über Differenz im Tagesgang (Temperatur oben, Wind unten) ---
 diff_stunde <- sel %>%
   group_by(stunde, strasse) %>%
   summarise(Ta = mean(humve_meteo_Ta_mean, na.rm = TRUE),
@@ -87,11 +70,9 @@ p_diff <- ggplot(diff_stunde, aes(stunde, wert)) +
         strip.placement = "outside", strip.text.y.left = element_text(angle = 90),
         panel.grid.minor = element_blank())
 
-ggsave("../../plots/wind_sidequest/wind_diff_tagesgang.png", p_diff, width = 8, height = 6, dpi = 200, bg = "white")
+ggsave(paste0(plotpfad, "wind_diff_tagesgang.png"), p_diff, width = 8, height = 6, dpi = 200, bg = "white")
 
-# =========================================================================
-#  GRAFIK 2 — Windgeschwindigkeit je Straße im Tagesgang
-# =========================================================================
+# --- Grafik 2: Windgeschwindigkeit je Straße im Tagesgang ---
 wind_stunde <- sel %>%
   group_by(stunde, strasse) %>%
   summarise(wind = mean(wind, na.rm = TRUE), .groups = "drop")
@@ -112,11 +93,9 @@ p_wind <- ggplot(wind_stunde, aes(stunde, wind, colour = strasse)) +
         plot.subtitle = element_text(colour = "grey40"),
         legend.position = "bottom")
 
-ggsave("../../plots/wind_sidequest/wind_tagesgang.png", p_wind, width = 8, height = 5, dpi = 200, bg = "white")
+ggsave(paste0(plotpfad, "wind_tagesgang.png"), p_wind, width = 8, height = 5, dpi = 200, bg = "white")
 
-# =========================================================================
-#  GRAFIK 3 — Durchmischung je Straße und Tageszeit (Boxplots)
-# =========================================================================
+# --- Grafik 3: Durchmischung je Straße und Tageszeit (Boxplots) ---
 mix_long <- sel %>%
   select(strasse, tageszeit, TKE, Var_w, Waermefluss) %>%
   pivot_longer(c(TKE, Var_w, Waermefluss), names_to = "metrik", values_to = "wert") %>%
@@ -136,11 +115,9 @@ p_mix <- ggplot(mix_long, aes(tageszeit, wert, fill = strasse)) +
         plot.subtitle = element_text(colour = "grey40"),
         legend.position = "bottom")
 
-ggsave("../../plots/wind_sidequest/mischung_boxplots.png", p_mix, width = 9, height = 4.5, dpi = 200, bg = "white")
+ggsave(paste0(plotpfad, "mischung_boxplots.png"), p_mix, width = 9, height = 4.5, dpi = 200, bg = "white")
 
-# =========================================================================
-#  KENNZAHLEN
-# =========================================================================
+# --- Kennzahlen ---
 kennz <- function(df) df %>% summarise(
   n = n(),
   wind = round(mean(wind, na.rm = TRUE), 2),

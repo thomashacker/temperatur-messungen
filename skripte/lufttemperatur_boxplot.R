@@ -1,8 +1,5 @@
 #' Lufttemperatur: begrünte vs. unbegrünte Straße (Boxplots)
-#' Abschlussbericht Datenanalyse Stadtklima 2026
-#' Boxplots der Lufttemperatur je Straße, aufgeteilt nach Stationsauswahl
-#' (alle vs. 2,4,5,7) und Tageszeit (Gesamt/Tag/Nacht). Gleiche Optik wie die
-#' Oberflächentemperatur-Boxplots, damit die Auswertungen einheitlich sind.
+#' Boxplots je Straße nach Stationsauswahl (alle vs. 2,4,5,7) und Tageszeit (Gesamt/Tag/Nacht).
 #' Autor: Hannah Balle
 
 # --- Pakete ---------------------------------------------------------------
@@ -11,19 +8,10 @@ library(tidyr)
 library(ggplot2)
 library(lubridate)
 
-# --- Daten laden ----------------------------------------------------------
-# Portabler Datenpfad: die Datei campaign_2026.rds liegt NICHT im Repository
-# (siehe README.md, Abschnitt Setup). Suchreihenfolge: 1) Umgebungsvariable
-# CAMPAIGN_RDS, 2) ein data/-Ordner im Repo, 3) der CONTEXT-Ordner neben dem
-# Repo. Skripte werden aus ihrem eigenen Ordner ausgeführt (wie die ggsave-Pfade).
-datenpfad <- Sys.getenv("CAMPAIGN_RDS", unset = NA)
-if (is.na(datenpfad) || !file.exists(datenpfad)) {
-  kandidaten <- c("data/campaign_2026.rds", "../data/campaign_2026.rds",
-                  "../../data/campaign_2026.rds", "../CONTEXT/campaign_2026.rds",
-                  "../../CONTEXT/campaign_2026.rds", "../../../CONTEXT/campaign_2026.rds")
-  datenpfad <- kandidaten[file.exists(kandidaten)][1]
-}
-if (is.na(datenpfad)) stop("campaign_2026.rds nicht gefunden. Siehe README.md (Setup).")
+# --- Pfade (bei Bedarf anpassen) ---
+datenpfad <- "../../CONTEXT/campaign_2026.rds"  # Kampagnendatei
+plotpfad  <- "../plots/"                        # Zielordner der Grafiken
+
 Messkampagne <- readRDS(datenpfad)
 Daten <- filter(Messkampagne$data, visit_status == "ok")
 
@@ -41,10 +29,9 @@ besuche <- Daten %>%
 # Auswahl der stark besonnten Stationen ausschließen -> übrig: 2, 4, 5, 7.
 auswahl_stationen <- c(2, 4, 5, 7)
 
-# --- Aggregation auf RUNDENEBENE ------------------------------------------
-# Wie bei der Oberflächentemperatur: pro Runde und Straße werden die Stationen
-# zu EINEM Wert gemittelt. Damit ist die Runde die Beobachtungseinheit
-# (n = 40 je Straße), was Pseudoreplikation vermeidet und zum gepaarten t-Test passt.
+# --- Aggregation auf Rundenebene ------------------------------------------
+# Pro Runde und Straße die Stationen zu einem Wert mitteln; Runde = Beobachtungseinheit
+# (n = 40 je Straße), vermeidet Pseudoreplikation und passt zum gepaarten t-Test.
 aggregiere_runde <- function(df) {
   df %>%
     group_by(round_no, strasse) %>%
@@ -83,14 +70,12 @@ plot_df <- plot_df %>%
                          levels = c("Gesamt", "Tag (05–22 Uhr)", "Nacht (22–05 Uhr)"))
   )
 
-# =========================================================================
-#  GRAFIK — sechs einzelne Boxplot-Dateien
-# =========================================================================
+# --- Grafik: sechs einzelne Boxplot-Dateien ---
 # Gemeinsame y-Achse über alle sechs Grafiken, damit sie direkt vergleichbar sind.
 y_grenzen <- range(plot_df$Ta, na.rm = TRUE)
 farben_strasse <- c("Begrünte Straße" = "forestgreen", "Unbegrünte Straße" = "gray60")
 
-# Funktion: erzeugt und speichert EIN Boxplot-Feld als eigene PNG-Datei.
+# Erzeugt und speichert ein Boxplot-Feld als eigene PNG-Datei.
 speichere_boxplot <- function(daten, untertitel, dateiname) {
   p <- ggplot(daten, aes(x = strasse, y = Ta, fill = strasse)) +
     geom_boxplot(width = 0.6, outlier.size = 0.8, alpha = 0.9, linewidth = 0.4) +
@@ -107,7 +92,7 @@ speichere_boxplot <- function(daten, untertitel, dateiname) {
           legend.position = "bottom",
           panel.grid.major.y = element_line(colour = "grey85"),
           panel.grid.minor.y = element_line(colour = "grey92", linewidth = 0.3))
-  ggsave(paste0("../plots/", dateiname), p, width = 6.5, height = 5, dpi = 200, bg = "white")
+  ggsave(paste0(plotpfad, dateiname), p, width = 6.5, height = 5, dpi = 200, bg = "white")
 }
 
 # Die sechs Kombinationen: (Stationsauswahl) x (Tageszeit), je eine eigene Datei.
@@ -126,12 +111,9 @@ for (k in kombis) {
   speichere_boxplot(daten_feld, untertitel, k$datei)
 }
 
-# =========================================================================
-#  STATISTIK
-# =========================================================================
+# --- Statistik ---
 
-# --- Mittlere Differenz: wie viel kühler ist die begrünte Straße? ---------
-# Konvention: unbegrünt minus begrünt; positiv = begrünte Straße kühler.
+# Mittlere Differenz: unbegrünt minus begrünt (positiv = begrünte Straße kühler).
 differenz_tab <- plot_df %>%
   group_by(stationsset, zeitfenster, strasse) %>%
   summarise(mittel = mean(Ta), .groups = "drop") %>%
@@ -159,8 +141,7 @@ kennz_tab <- plot_df %>%
 cat("\n### Deskriptive Kennzahlen je Gruppe (Median und Co.) ###\n")
 print(as.data.frame(kennz_tab), row.names = FALSE)
 
-# --- Gepaarter t-Test pro Runde, Auswahl 2,4,5,7 --------------------------
-# Je Runde ein Paar (beide Straßen). Getestet: unbegrünt vs. begrünt.
+# --- Gepaarter t-Test pro Runde, Auswahl 2,4,5,7 (je Runde ein Paar, unbegrünt vs. begrünt) ---
 paar_test <- function(df) {
   w <- df %>% select(round_no, strasse, Ta) %>%
     pivot_wider(names_from = strasse, values_from = Ta)

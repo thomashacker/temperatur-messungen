@@ -1,9 +1,5 @@
 #' Lufttemperatur aus den stationären nMetos-Daten: gibt es den 15-Uhr-Peak?
-#' Abschlussbericht Datenanalyse Stadtklima 2026
-#' Die stationären Stationen (nMetos) messen kontinuierlich und für beide Straßen
-#' gleichzeitig, anders als die mobile HuMVe-Messung, die die Stationen nacheinander
-#' besucht. Damit lässt sich prüfen, ob der 15-Uhr-Peak (begrünte Straße kurz wärmer)
-#' echt ist oder ein Artefakt des mobilen Messtimings.
+#' Prüft am gleichzeitig gemessenen stationären Signal, ob der mobile 15-Uhr-Peak echt ist.
 #' Autor: Hannah Balle
 
 # --- Pakete ---------------------------------------------------------------
@@ -12,17 +8,10 @@ library(tidyr)
 library(ggplot2)
 library(lubridate)
 
-# --- Daten laden ----------------------------------------------------------
-# Portabler Datenpfad (siehe README.md, Abschnitt Setup): Umgebungsvariable
-# CAMPAIGN_RDS, sonst data/ im Repo, sonst CONTEXT/ daneben.
-datenpfad <- Sys.getenv("CAMPAIGN_RDS", unset = NA)
-if (is.na(datenpfad) || !file.exists(datenpfad)) {
-  kandidaten <- c("data/campaign_2026.rds", "../data/campaign_2026.rds",
-                  "../../data/campaign_2026.rds", "../CONTEXT/campaign_2026.rds",
-                  "../../CONTEXT/campaign_2026.rds", "../../../CONTEXT/campaign_2026.rds")
-  datenpfad <- kandidaten[file.exists(kandidaten)][1]
-}
-if (is.na(datenpfad)) stop("campaign_2026.rds nicht gefunden. Siehe README.md (Setup).")
+# --- Pfade (bei Bedarf anpassen) ---
+datenpfad <- "../../CONTEXT/campaign_2026.rds"  # Kampagnendatei
+plotpfad  <- "../plots/"                        # Zielordner der Grafiken
+
 Messkampagne <- readRDS(datenpfad)
 Daten <- filter(Messkampagne$data, visit_status == "ok")
 
@@ -60,9 +49,7 @@ tag_rechtecke <- tibble(
 )
 zeitbereich <- range(stat_lang$stunde, na.rm = TRUE)
 
-# =========================================================================
-#  GRAFIK 1 — Stationäre Lufttemperatur im Zeitverlauf
-# =========================================================================
+# --- Grafik 1: Stationäre Lufttemperatur im Zeitverlauf ---
 p1 <- ggplot() +
   geom_rect(data = tag_rechtecke,
             aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = "Tag"), alpha = 0.5) +
@@ -80,13 +67,10 @@ p1 <- ggplot() +
   theme_minimal(base_size = 12) +
   theme(plot.title = element_text(face = "bold"),
         plot.subtitle = element_text(colour = "grey40"), legend.position = "bottom")
-ggsave("../plots/lufttemperatur_stationaer_zeitverlauf.png", p1,
+ggsave(paste0(plotpfad, "lufttemperatur_stationaer_zeitverlauf.png"), p1,
        width = 10, height = 5.5, dpi = 200, bg = "white")
 
-# =========================================================================
-#  GRAFIK 2 — Differenz begrünt minus unbegrünt: mobil vs. stationär
-#  Zeigt: beide Quellen stimmen überein, nur der mobile Wert springt um 15 Uhr.
-# =========================================================================
+# --- Grafik 2: Straßendifferenz mobil vs. stationär (beide stimmen überein, nur mobil springt um 15 Uhr) ---
 mob_diff <- aufb %>%
   group_by(stunde, strasse) %>%
   summarise(Ta = mean(humve_meteo_Ta_mean, na.rm = TRUE), .groups = "drop") %>%
@@ -115,15 +99,10 @@ p2 <- ggplot(diff_lang, aes(stunde, diff, colour = quelle)) +
   theme_minimal(base_size = 12) +
   theme(plot.title = element_text(face = "bold"),
         plot.subtitle = element_text(colour = "grey40"), legend.position = "bottom")
-ggsave("../plots/lufttemperatur_mobil_vs_stationaer_differenz.png", p2,
+ggsave(paste0(plotpfad, "lufttemperatur_mobil_vs_stationaer_differenz.png"), p2,
        width = 10, height = 5.5, dpi = 200, bg = "white")
 
-# =========================================================================
-#  BOXPLOTS (stationär) — Aggregation auf Rundenebene
-# =========================================================================
-# Wie bei den mobilen Boxplots: pro Runde je Straße ein Wert (Mittel der zwei
-# stationären Stationen über die Runde). n = 40 je Straße. Die stationären
-# Stationen sind feste Standorte, deshalb gibt es keinen Alle/Auswahl-Split.
+# --- Boxplots (stationär): pro Runde je Straße ein Wert (Mittel der zwei Stationen), n = 40 je Straße ---
 runde_stat <- aufb %>%
   group_by(round_no) %>%
   summarise(`Begrünte Straße`   = mean(stat_begr,   na.rm = TRUE),
@@ -161,7 +140,7 @@ speichere_boxplot <- function(daten, untertitel, dateiname) {
           legend.position = "bottom",
           panel.grid.major.y = element_line(colour = "grey85"),
           panel.grid.minor.y = element_line(colour = "grey92", linewidth = 0.3))
-  ggsave(paste0("../plots/", dateiname), p, width = 6.5, height = 5, dpi = 200, bg = "white")
+  ggsave(paste0(plotpfad, dateiname), p, width = 6.5, height = 5, dpi = 200, bg = "white")
 }
 
 kombis <- list(
@@ -171,9 +150,7 @@ kombis <- list(
 )
 for (k in kombis) speichere_boxplot(filter(plot_df, zeitfenster == k$zf), k$zf, k$datei)
 
-# =========================================================================
-#  STATISTIK (stationär)
-# =========================================================================
+# --- Statistik (stationär) ---
 # --- Mittlere Temperatur je Gruppe und Differenz (unbegrünt minus begrünt) ---
 differenz_tab <- plot_df %>%
   group_by(zeitfenster, strasse) %>%

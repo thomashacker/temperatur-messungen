@@ -1,33 +1,21 @@
 #' Windeffekt unter Kontrolle der Einstrahlung
-#' Abschlussbericht Datenanalyse Stadtklima 2026
-#' Prüft, ob die begrünte Straße bei gleicher Einstrahlung wärmer ist, was auf die
-#' geringere Durchlüftung (Wind) hindeuten würde. Der Schatteneffekt wird also
-#' herausgerechnet, um den eigenständigen Beitrag des Windes zu isolieren.
-#' Grundlage: Auswahl 2, 4, 5, 7. Autor: Hannah Balle
+#' Abschlussbericht Datenanalyse Stadtklima 2026. Autor: Hannah Balle
+#' Rechnet den Schatteneffekt heraus, um den Windbeitrag zu isolieren (Auswahl 2, 4, 5, 7).
 
-# --- Pakete ---------------------------------------------------------------
+# --- Pakete ---
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(lubridate)
 
-# --- Daten laden ----------------------------------------------------------
-# Portabler Datenpfad: die Datei campaign_2026.rds liegt NICHT im Repository
-# (siehe README.md, Abschnitt Setup). Suchreihenfolge: 1) Umgebungsvariable
-# CAMPAIGN_RDS, 2) ein data/-Ordner im Repo, 3) der CONTEXT-Ordner neben dem
-# Repo. Skripte werden aus ihrem eigenen Ordner ausgeführt (wie die ggsave-Pfade).
-datenpfad <- Sys.getenv("CAMPAIGN_RDS", unset = NA)
-if (is.na(datenpfad) || !file.exists(datenpfad)) {
-  kandidaten <- c("data/campaign_2026.rds", "../data/campaign_2026.rds",
-                  "../../data/campaign_2026.rds", "../CONTEXT/campaign_2026.rds",
-                  "../../CONTEXT/campaign_2026.rds", "../../../CONTEXT/campaign_2026.rds")
-  datenpfad <- kandidaten[file.exists(kandidaten)][1]
-}
-if (is.na(datenpfad)) stop("campaign_2026.rds nicht gefunden. Siehe README.md (Setup).")
+# --- Pfade (bei Bedarf anpassen) ---
+datenpfad <- "../../../CONTEXT/campaign_2026.rds"   # Kampagnendatei
+plotpfad  <- "../../plots/wind_sidequest/"          # Zielordner der Grafiken
+
 Messkampagne <- readRDS(datenpfad)
 Daten <- filter(Messkampagne$data, visit_status == "ok")
 
-# --- Aufbereitung ---------------------------------------------------------
+# --- Aufbereitung ---
 auswahl_stationen <- c(2, 4, 5, 7)
 farben_strasse <- c("Begrünte Straße" = "forestgreen", "Unbegrünte Straße" = "gray60")
 
@@ -41,10 +29,7 @@ sel <- Daten %>%
     wind = humve_wind_wind_speed_gill_mean
   )
 
-# =========================================================================
-#  GRAFIK 1 — Lufttemperatur gegen Einstrahlung, je Straße
-#  Bei gleicher Einstrahlung (x) ablesbar, ob die begrünte Straße wärmer ist.
-# =========================================================================
+# --- Grafik 1: Lufttemperatur gegen Einstrahlung, je Straße (gleiche Einstrahlung vergleichen) ---
 p_scatter <- ggplot(sel, aes(ShortIn, Ta, colour = strasse)) +
   geom_point(alpha = 0.5, size = 1.3) +
   geom_smooth(method = "lm", se = TRUE, linewidth = 1) +
@@ -56,16 +41,10 @@ p_scatter <- ggplot(sel, aes(ShortIn, Ta, colour = strasse)) +
   theme(plot.title = element_text(face = "bold"),
         plot.subtitle = element_text(colour = "grey40"), legend.position = "bottom")
 
-ggsave("../../plots/wind_sidequest/ta_vs_einstrahlung.png", p_scatter, width = 8, height = 5.5, dpi = 200, bg = "white")
+ggsave(paste0(plotpfad, "ta_vs_einstrahlung.png"), p_scatter, width = 8, height = 5.5, dpi = 200, bg = "white")
 
-# =========================================================================
-#  TEST — Paarweise pro Runde (Tageszeit automatisch kontrolliert)
-#  Je Runde die Differenz begrünt minus unbegrünt für Ta, Einstrahlung, Wind.
-#  Modell: dTa ~ dShortIn + dWind.
-#    dShortIn-Koeffizient > 0: weniger Sonne -> kühler (Schatteneffekt).
-#    dWind-Koeffizient  < 0: wenn grün relativ windstiller (dWind negativ),
-#                            dann grün relativ wärmer (dTa positiv) -> Windeffekt.
-# =========================================================================
+# --- Test: paarweise pro Runde, Differenzen begrünt minus unbegrünt ---
+# Modell dTa ~ dShortIn + dWind: dShortIn>0 = Schatteneffekt, dWind<0 (windstiller) => wärmer = Windeffekt.
 paar <- sel %>%
   group_by(round_no, strasse) %>%
   summarise(Ta = mean(Ta, na.rm = TRUE), ShortIn = mean(ShortIn, na.rm = TRUE),
@@ -83,9 +62,7 @@ cat("\n### Zum Vergleich: nur Einstrahlung, bzw. nur Wind ###\n")
 cat("dTa ~ dShortIn:\n"); print(round(coef(summary(lm(dTa ~ dShortIn, data = paar))), 4))
 cat("\ndTa ~ dWind:\n");  print(round(coef(summary(lm(dTa ~ dWind, data = paar))), 4))
 
-# =========================================================================
-#  GRAFIK 2 — Partielle Streudiagramme: dTa gegen dShortIn und gegen dWind
-# =========================================================================
+# --- Grafik 2: Partielle Streudiagramme dTa gegen dShortIn und gegen dWind ---
 paar_long <- paar %>%
   select(round_no, dTa, dShortIn, dWind) %>%
   pivot_longer(c(dShortIn, dWind), names_to = "einfluss", values_to = "wert") %>%
@@ -106,6 +83,6 @@ p_partial <- ggplot(paar_long, aes(wert, dTa)) +
   theme(plot.title = element_text(face = "bold"),
         plot.subtitle = element_text(colour = "grey40"))
 
-ggsave("../../plots/wind_sidequest/wind_effekt_streudiagramm.png", p_partial, width = 9, height = 4.5, dpi = 200, bg = "white")
+ggsave(paste0(plotpfad, "wind_effekt_streudiagramm.png"), p_partial, width = 9, height = 4.5, dpi = 200, bg = "white")
 
 cat("\nFERTIG. Zwei Grafiken gespeichert in ../plots/ (ta_vs_einstrahlung, wind_effekt_streudiagramm)\n")
