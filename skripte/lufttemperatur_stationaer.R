@@ -59,7 +59,6 @@ tag_rechtecke <- tibble(
   xmax = as.POSIXct(paste(tage, "22:00:00"), tz = tzone)
 )
 zeitbereich <- range(stat_lang$stunde, na.rm = TRUE)
-spike_zeit  <- as.POSIXct("2026-06-19 15:00:00", tz = tzone)
 
 # =========================================================================
 #  GRAFIK 1 — Stationäre Lufttemperatur im Zeitverlauf
@@ -67,7 +66,6 @@ spike_zeit  <- as.POSIXct("2026-06-19 15:00:00", tz = tzone)
 p1 <- ggplot() +
   geom_rect(data = tag_rechtecke,
             aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf, fill = "Tag"), alpha = 0.5) +
-  geom_vline(xintercept = spike_zeit, linetype = "dashed", colour = "firebrick", linewidth = 0.6) +
   geom_line(data = stat_lang, aes(stunde, Ta, colour = strasse), linewidth = 1) +
   geom_point(data = stat_lang, aes(stunde, Ta, colour = strasse), size = 1.6) +
   scale_fill_manual(name = NULL, values = c("Tag" = "lightyellow"), labels = "Tag (05–22 Uhr)") +
@@ -78,7 +76,7 @@ p1 <- ggplot() +
   labs(title = "Lufttemperatur (stationäre nMetos-Stationen)",
        subtitle = "Gleichzeitig gemessen für beide Straßen; die begrünte bleibt durchweg kühler, kein 15-Uhr-Peak",
        x = "Zeit", y = "Lufttemperatur (°C)",
-       caption = "Gestrichelt: Zeitpunkt des mobilen 15-Uhr-Peaks. Hintergrund: hellgelb = Tag") +
+       caption = "Hintergrund: hellgelb = Tag") +
   theme_minimal(base_size = 12) +
   theme(plot.title = element_text(face = "bold"),
         plot.subtitle = element_text(colour = "grey40"), legend.position = "bottom")
@@ -106,7 +104,6 @@ p2 <- ggplot(diff_lang, aes(stunde, diff, colour = quelle)) +
   geom_rect(data = tag_rechtecke, inherit.aes = FALSE,
             aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf), fill = "lightyellow", alpha = 0.5) +
   geom_hline(yintercept = 0, colour = "grey50", linewidth = 0.4) +
-  geom_vline(xintercept = spike_zeit, linetype = "dashed", colour = "firebrick", linewidth = 0.6) +
   geom_line(linewidth = 1) + geom_point(size = 1.6) +
   scale_colour_manual(name = "Messquelle", values = farben_quelle) +
   scale_x_datetime(date_breaks = "6 hours", date_labels = "%d.%m.\n%H:%M") +
@@ -114,7 +111,7 @@ p2 <- ggplot(diff_lang, aes(stunde, diff, colour = quelle)) +
   labs(title = "Straßendifferenz der Lufttemperatur: mobil vs. stationär",
        subtitle = "Differenz begrünt minus unbegrünt; über 0 = begrünte Straße wärmer",
        x = "Zeit", y = "Δ Lufttemperatur (°C)",
-       caption = "Gestrichelt: mobiler 15-Uhr-Peak. Hintergrund: hellgelb = Tag") +
+       caption = "Hintergrund: hellgelb = Tag") +
   theme_minimal(base_size = 12) +
   theme(plot.title = element_text(face = "bold"),
         plot.subtitle = element_text(colour = "grey40"), legend.position = "bottom")
